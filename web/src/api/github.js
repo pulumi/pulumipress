@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/core";
 
 
+const token=""
 
 export const testGH = async function(config) {
     const owner = config.owner
@@ -13,15 +14,15 @@ export const testGH = async function(config) {
     await createBranch(owner, repo, branch, masterSha)
     const lastSha = await getLastSha(owner, repo, branch);
     const treeSha = await createFile(owner, repo, btoa(fileContents), lastSha, fileName);
-    const newSha = await createCommit(owner, repo, "test message", treeSha, lastSha);
+    const newSha = await createCommit(owner, repo, "adding new workshop", treeSha, lastSha);
     await updateRef(owner, repo, branch, newSha);
     return await createPR(owner, repo, branch)
 }
 
 async function createPR(owner, repo, branch) {
     const octokit = new Octokit({ auth: token }),
-        title = 'Test PR',
-        body  = 'This is a test using workshop gen tool!',
+        title = `New Workshop`,
+        body  = 'This worskshop was generated using PulumiPress',
         head  = `${branch}`,
         base  = 'master';
 
@@ -39,6 +40,7 @@ async function createPR(owner, repo, branch) {
 async function createBranch(owner, repo, branch, sha) {
     const octokit = new Octokit({ auth: token }),
         ref = `refs/heads/${branch}`
+        // sha = '06413b14b92d06e26935e22775ecb71740706adb'
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/refs`, { owner, repo, ref, sha }

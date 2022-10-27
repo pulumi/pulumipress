@@ -7,11 +7,16 @@ import React from "react";
 
 const Form = jsonSchemaForms.default
 
+const dev = false;
+
 export class WorkshopsForm extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = { loading: false };
+        this.state = { 
+            loading: false, 
+            inprogress: localStorage.getItem("inprogress"),
+        };
         this.render = this.render.bind(this);
         this.submit = this.submit.bind(this);
     }
@@ -20,9 +25,16 @@ export class WorkshopsForm extends React.Component {
     }
 
     submit(form) {
-        const owner = "pulumi";
-        const repo = "pulumi-hugo";
-        const branch = Date.now();
+        let owner = "pulumi";
+        let repo = "pulumi-hugo";
+
+        if (dev) {
+            owner = "sean1588";
+            repo = "sean-test-project";
+        }
+
+
+        const branch = `${form.formData.url_slug}-${Date.now()}`;
 
         // create file contents
         const dashes = "---\n";
@@ -44,10 +56,14 @@ export class WorkshopsForm extends React.Component {
 
         // github.testGH(config).then(res => {
         //     this.setState({loading: false})
+        //     console.log("data", res)
+        //     localStorage.setItem("inprogress", "")
         //     window.open(res.body.html_url, '_blank');
         // }).catch(err => {
-        //     this.setState({loading: false})
-        //     console.log(err)
+        //     this.setState({ loading: false});
+        //     alert(JSON.stringify(err));
+        //     localStorage.setItem("inprogress", JSON.stringify(form.formData))
+        //     this.setState({inprogress: localStorage.getItem("inprogress")})
         // }) ;
 
         const requestOptions = {
@@ -60,16 +76,23 @@ export class WorkshopsForm extends React.Component {
             .then(res => {
                 this.setState({ loading: false});
                 console.log("data", res)
+                localStorage.setItem("inprogress", "")
                 window.open(res.body.html_url, '_blank');
+            }).catch(err => {
+                this.setState({ loading: false});
+                alert(JSON.stringify(err));
+                localStorage.setItem("inprogress", JSON.stringify(form.formData))
+                this.setState({inprogress: localStorage.getItem("inprogress")})
             });
     }
 
     render () {
-        const { loading } = this.state;
+        const { loading, inprogress } = this.state;
+        const data = inprogress ? JSON.parse(inprogress) : this.props.data
         return loading ? <div style={{margin: "100px"}}>Submitting PR.....</div>
         : (
-            <div style={{ padding: "20px" }}>
-                <Form schema={schema} uiSchema={uiSchema} formData={this.props.data} validator={validator} noValidate={this.props.noValidate} onSubmit={this.submit}></Form>
+            <div style={{ width: "67%", padding: "20px" }}>
+                <Form schema={schema} uiSchema={uiSchema} formData={data} validator={validator} noValidate={this.props.noValidate} onSubmit={this.submit}></Form>
             </div>
         )
     }

@@ -22,7 +22,7 @@ export const testGH = async function(ev, _) {
     await createBranch(owner, repo, branch, masterSha)
     const lastSha = await getLastSha(owner, repo, branch);
     const treeSha = await createFile(owner, repo, base64data, lastSha, fileName);
-    const newSha = await createCommit(owner, repo, "test message", treeSha, lastSha);
+    const newSha = await createCommit(owner, repo, "adding new workshop", treeSha, lastSha);
     await updateRef(owner, repo, branch, newSha);
     const response = await createPR(owner, repo, branch);
     return {
@@ -34,8 +34,8 @@ export const testGH = async function(ev, _) {
 
 async function createPR(owner, repo, branch) {
     const octokit = new Octokit({ auth: token }),
-        title = 'Test PR',
-        body  = 'This is a test using workshop gen tool!',
+        title = `New Workshop`,
+        body  = 'This worskshop was generated using PulumiPress',
         head  = `${branch}`,
         base  = 'master';
 

@@ -4,20 +4,17 @@ export const schema = {
     "properties": {
         "title": {
             "type": "string",
-            "default": "this is a test workshop",
             "maxLength": 60,
             "description": "This is the title that shows up on the list page."
         },
         "meta_desc": {
             "type": "string",
-            "default": "this is a test description that is more than 50 chars............................................",
             "minLength": 50,
             "maxLength": 160,
             "description": "This is the description that shows up on the list page."
         },
         "url_slug": {
             "type": "string",
-            "default": "test-workshop-url-slug",
             "description": "This is the url route where the page will live at, e.g. getting-started-with-iac "
         },
         "preview_image": {
@@ -28,15 +25,14 @@ export const schema = {
         "title": "Hero content",
         "type": "object",
         "description": "You can use the same title that shows up on the list page if you desire and you can just leave the default image.",
-        "default": "this is a test workshop",
         "properties": {
           "title": {
             "type": "string",
-            "default": "this is a test workshop"
           },
           "image": {
             "type": "string",
             "default": "/icons/containers.svg",
+            "description": "you can leave the default value here, '/icons/containers.svg'",
           }
         },
         "required": [
@@ -50,24 +46,24 @@ export const schema = {
         "properties": {
           "title": {
             "type": "string",
-            "default": "this is a test workshop",
           },
           "description": {
             "type": "string",
-            "default": "this is a test description",
           },
           "sortable_date": {
             "type": "string",
-            "default": "2022-12-25T09:00:00-08:00",
             "format": "date-time",
+            "description": "the time the workshop will start"
           },
           "duration": {
             "type": "string",
-            "default": "30 minutes"
+            "default": "30 minutes",
+            "description": "length of workshop in minutes. Value should include number followed by minutes, e.g. `60 minutes`"
           },
           "datetime": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "this is an old field we do not really use anymore. you can leave blank, only sortable_date should be needed."
           },
           "youtube_url": {
             "type": "string"
@@ -151,6 +147,7 @@ export const schema = {
         ]
       },
       "featured": {
+        "title": "featured (will show in the featured section)",
         "type": "boolean",
         "default": false,
       },
@@ -174,18 +171,22 @@ export const schema = {
         "default": true,
       },
       "type": {
+        "description": "you can leave the default value here as 'webinars'",
         "type": "string",
         "default": "webinars"
       },
       "external": {
+        "title": "external (webinars will link to an external page instead of a webinar landing/registration page)",
         "type": "boolean",
         "default": false,
       },
       "block_external_search_index": {
+        "title": "block_external_search_index (tell google not to index this page)",
         "type": "boolean",
         "default": false,
       },
       "aws_only": {
+        "title": "aws_only (only show aws specific getting started links on the page)",
         "type": "boolean",
         "default": false
       }
