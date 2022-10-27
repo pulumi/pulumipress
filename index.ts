@@ -37,8 +37,6 @@ const kmsKey = new aws.kms.Key("pulumi-press-kms-key", {
 
 const domainName = config.require("domainName");
 
-// export let apiOut: apigateway.RestAPI;
-
 createProtectedApiGateway({ domainName }, (awsprovider) => {
 
     // A Lambda function to invoke
@@ -87,85 +85,3 @@ createProtectedApiGateway({ domainName }, (awsprovider) => {
 
     return api;
 })
-
-
-
-// const websiteArgs =  {
-//     sitePath: "./web/build",
-//     targetDomain: "holung.com",
-//     withCDN: true
-// } as staticwebsite.WebsiteArgs
-
-// const web = new staticwebsite.Website("test", websiteArgs);
-
-// export const bucketName = web.bucketName;
-// export const bucketWebsiteURL = web.bucketWebsiteURL;
-
-
-// const apiOrigin: aws.types.input.cloudfront.DistributionOrigin = {
-//     originId: api.api.arn,
-//     domainName: api.url.apply(url => url.replace("https://", "").replace("/stage/", "")),
-//     originPath: "stage",
-//     customOriginConfig: {
-//         originProtocolPolicy: "http-only",
-//         httpPort: 80,
-//         httpsPort: 443,
-//         originSslProtocols: ["TLSv1.2"],
-//     },
-// };
-
-// const distributionArgs: aws.cloudfront.DistributionArgs = {
-//     enabled: true,
-
-//     // Alternate aliases the CloudFront distribution can be reached at, in addition to https://xxxx.cloudfront.net.
-//     // Required if you want to access the distribution via config.targetDomain as well.
-
-//     aliases: [],
-
-//     // We only specify one origin for this distribution, the S3 content bucket.
-//     origins: [
-//         apiOrigin
-//     ],
-
-//     defaultRootObject: "",
-
-//     // A CloudFront distribution can configure different cache behaviors based on the request path.
-//     // Here we just specify a single, default cache behavior which is just read-only requests to S3.
-//     defaultCacheBehavior: {
-//         targetOriginId: api.api.arn,
-
-//         viewerProtocolPolicy: "redirect-to-https",
-//         allowedMethods: ["GET", "HEAD", "OPTIONS"],
-//         cachedMethods: ["GET", "HEAD", "OPTIONS"],
-
-//         forwardedValues: {
-//             headers: [ "Website-Version" ],
-//             cookies: { forward: "none" },
-//             queryString: false,
-//         },
-
-//         minTtl: 0,
-//         defaultTtl: 300,
-//         maxTtl: 300,
-
-//     },
-
-
-//     restrictions: {
-//         geoRestriction: {
-//             restrictionType: "none",
-//         },
-//     },
-
-//     viewerCertificate: {
-//         cloudfrontDefaultCertificate: true,
-//         sslSupportMethod: "sni-only",
-//     },
-// };
-
-// const cdn = new aws.cloudfront.Distribution(
-//     "website-cdn",
-//     distributionArgs,
-// );
-
-// export const cdnUrl = cdn.domainName;
