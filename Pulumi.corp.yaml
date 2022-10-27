@@ -1,0 +1,4 @@
+config:
+  aws:region: us-west-2
+  pulumi-press:domainName: press.corptron9000.pulumi.com
+  pulumi-press:hostedZone: corptron9000.pulumi.com

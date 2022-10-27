@@ -1,0 +1,3 @@
+name: pulumi-press
+description: A serverless app on AWS API Gateway and Lambda
+runtime: nodejs
