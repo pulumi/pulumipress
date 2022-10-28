@@ -6,7 +6,7 @@ export const testGH = async function(ev, _) {
 
     let b = ev.body;
     let evbuff = new Buffer(b, 'base64');
-    let body = evbuff.toString('ascii');
+    let body = evbuff.toString('utf-8');
     
     const config = JSON.parse(body);
     const owner = config.owner
@@ -33,8 +33,13 @@ export const testGH = async function(ev, _) {
 
 
 async function createPR(owner, repo, branch) {
+
+    const parts = branch.split("-");
+    const remove = parts[parts.length-1];
+    const prName = parts.join(" ").replace(remove, "");
+
     const octokit = new Octokit({ auth: token }),
-        title = `New Workshop`,
+        title = `New Workshop - ${prName}`,
         body  = 'This worskshop was generated using PulumiPress',
         head  = `${branch}`,
         base  = 'master';
