@@ -19,12 +19,31 @@ export class WorkshopsForm extends React.Component {
         };
         this.render = this.render.bind(this);
         this.submit = this.submit.bind(this);
+        this.send = this.send.bind(this);
     }
     
     componentDidMount() {
+
     }
 
     submit(form) {
+        let owner = "pulumi";
+        let repo = "pulumi-hugo";
+        const path = "themes/default/content/resources";
+
+        github.getContents(owner, repo, path, "master").then( existing => {
+            const urlExists = existing.some(ws => {
+                return ws.name === form.formData.url_slug;
+            });
+            if (!urlExists || this.props.mode === "edit") {
+                this.send(form);
+            } else {
+                alert("url slug already exists. choose a different url.")
+            }
+        });
+    }
+
+    send(form) {
         let owner = "pulumi";
         let repo = "pulumi-hugo";
 
@@ -54,41 +73,49 @@ export class WorkshopsForm extends React.Component {
 
         this.setState({loading: true})
 
-        // github.testGH(config).then(res => {
-        //     this.setState({loading: false})
-        //     console.log("data", res)
-        //     localStorage.setItem("inprogress", "")
-        //     window.open(res.body.html_url, '_blank');
-        // }).catch(err => {
-        //     this.setState({ loading: false});
-        //     alert(JSON.stringify(err));
-        //     localStorage.setItem("inprogress", JSON.stringify(form.formData))
-        //     this.setState({inprogress: localStorage.getItem("inprogress")})
-        // }) ;
-
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        };
-        fetch('/gh', requestOptions)
-            .then(response => response.json())
-            .then(res => {
-                this.setState({ loading: false});
+        if (dev) {
+            github.testGH(config).then(res => {
+                this.setState({loading: false})
                 console.log("data", res)
                 localStorage.setItem("inprogress", "")
                 window.open(res.body.html_url, '_blank');
             }).catch(err => {
                 this.setState({ loading: false});
-                alert(JSON.stringify(err));
+                alert("error: " + JSON.stringify(err));
                 localStorage.setItem("inprogress", JSON.stringify(form.formData))
                 this.setState({inprogress: localStorage.getItem("inprogress")})
-            });
+            }) ;
+        } else {
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            };
+            fetch('/gh', requestOptions)
+                .then(response => response.json())
+                .then(res => {
+                    this.setState({ loading: false});
+                    console.log("data", res)
+                    if (this.props.mode !== "edit") {
+                        localStorage.setItem("inprogress", "")
+                    }
+                    window.open(res.body.html_url, '_blank');
+                }).catch(err => {
+                    this.setState({ loading: false});
+                    alert("error: " + JSON.stringify(err));
+                    if (this.props.mode !== "edit") {
+                        localStorage.setItem("inprogress", JSON.stringify(form.formData))
+                        this.setState({inprogress: localStorage.getItem("inprogress")})
+                    }
+                });
+        }
+
+
     }
 
     render () {
         const { loading, inprogress } = this.state;
-        const data = inprogress ? JSON.parse(inprogress) : this.props.data
+        const data = inprogress && this.props.mode !== "edit" ? JSON.parse(inprogress) : this.props.data
         return loading ? <div style={{margin: "100px"}}>Submitting PR.....</div>
         : (
             <div style={{ width: "67%", padding: "20px" }}>

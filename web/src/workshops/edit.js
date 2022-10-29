@@ -12,11 +12,12 @@ export class WorkshopEdit extends React.Component {
     
     componentDidMount() {
         const urlParts = this.props.location.pathname.split("/")
+        const ref = urlParts[urlParts.length-2];
         const workshopName = urlParts[urlParts.length-1];
         const owner = "pulumi";
         const repo = "pulumi-hugo";
         const path = `themes/default/content/resources/${workshopName}/index.md`;
-        github.getContents(owner, repo, path).then( resp => {
+        github.getContents(owner, repo, path, ref).then( resp => {
             console.log(resp)
             let evbuff = new buffer.Buffer(resp.content, 'base64');
             let y = evbuff.toString('utf-8');
@@ -27,6 +28,6 @@ export class WorkshopEdit extends React.Component {
 
     render () {
         const { formData } = this.state
-        return <WorkshopsForm data={formData} noValidate></WorkshopsForm>
+        return <WorkshopsForm mode="edit" data={formData} noValidate></WorkshopsForm>
     }
 }

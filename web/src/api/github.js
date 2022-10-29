@@ -20,8 +20,13 @@ export const testGH = async function(config) {
 }
 
 async function createPR(owner, repo, branch) {
+
+    const parts = branch.split("-");
+    const remove = parts[parts.length-1];
+    const prName = parts.join(" ").replace(remove, "");
+
     const octokit = new Octokit({ auth: token }),
-        title = `New Workshop`,
+        title = `New Workshop - ${prName}`,
         body  = 'This worskshop was generated using PulumiPress',
         head  = `${branch}`,
         base  = 'master';
@@ -125,15 +130,29 @@ async function updateRef(owner, repo, branch, newSha) {
 
 }
 
-export async function getContents(owner, repo, path) {
+export async function getContents(owner, repo, path, ref) {
 
     const octokit = new Octokit({auth: token})
       
-    const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+    const response = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}?ref={ref}', {
         owner: owner,
         repo: repo,
-        path: path
+        path: path,
+        ref: ref
       })
+
+    return response.data;
+
+}
+
+export async function getPRs(owner, repo) {
+
+    const octokit = new Octokit({auth: token})
+      
+    const response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+        owner: owner,
+        repo: repo
+    })
 
     return response.data;
 

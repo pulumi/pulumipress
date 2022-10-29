@@ -7,30 +7,63 @@ import { LinkContainer } from 'react-router-bootstrap'
 export class WorkshopsList extends React.Component {
     constructor () {
         super()
-        this.state = { workshops: [] }
+        this.state = { workshops: [], prs: [] }
       }
     
       componentDidMount() {
         const owner = "pulumi";
         const repo = "pulumi-hugo";
         const path = "themes/default/content/resources";
-        github.getContents(owner, repo, path).then( resp => {
+        github.getContents(owner, repo, path, "master").then( resp => {
             this.setState({workshops: resp})
+        });
+
+        github.getPRs(owner, repo).then( resp => {
+            console.log("prs:", resp)
+            this.setState({prs: resp})
         });
       }
     
       render () {
-        const { workshops } = this.state
+        const { workshops, prs } = this.state
+        const openPrs = (prs && prs.length > 0) ? prs.filter(p => {
+            return p.head.ref.includes("-16"); 
+        }) : [];
+
         return (
             <div style={{padding: "15px"}}>
-                <h5>Select a workshop to edit.</h5>
+                <div style={{paddingBottom: "20px"}}>
+                    {
+                        openPrs.length ? (
+                            <div>
+                                <h5>Select an open PR to edit</h5>
+                                <ListGroup>
+                                    {
+                                        openPrs.map( (pr,i) => {
+                                            return (
+                                                <ListGroup.Item key={i} action>
+                                                    <LinkContainer to={`/workshop/edit/${pr.head.ref}/${pr.head.ref.split("-16")[0]}`}>
+                                                        <Nav.Link>{pr.head.ref.split("-16")[0]}</Nav.Link>
+                                                    </LinkContainer>
+                                                </ListGroup.Item>
+                                            )
+                                        })
+                                    }
+                                </ListGroup>
+                            </div>
+                        ) : (
+                            <div></div>
+                        )
+                    }
+                </div>
+                <h5>Select an existing workshop to edit</h5>
                  { 
                     workshops.length ?  (
                         <ListGroup>
                             {workshops.map( (ws,i) => {
                                 return (
                                     <ListGroup.Item key={i} action>
-                                        <LinkContainer to={`/workshop/edit/${ws.name}`}>
+                                        <LinkContainer to={`/workshop/edit/master/${ws.name}`}>
                                             <Nav.Link>{ws.name}</Nav.Link>
                                         </LinkContainer>
                                     </ListGroup.Item>
