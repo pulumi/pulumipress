@@ -1,3 +1,4 @@
+// JSON schema representation the form uses to render.
 export const schema = {
     "title": "Workshops",
     "type": "object",

@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/core";
 const token = process.env.GITHUB_TOKEN
 
 
-export const testGH = async function(ev, _) {
+export const openPR = async function(ev, _) {
 
     let b = ev.body;
     let evbuff = new Buffer(b, 'base64');
@@ -15,6 +15,7 @@ export const testGH = async function(ev, _) {
     const fileName = config.fileName
     const fileContents = config.fileContents
 
+    // base64 encode file contents.
     let buff = new Buffer(fileContents);
     let base64data = buff.toString('base64');
 
@@ -31,6 +32,33 @@ export const testGH = async function(ev, _) {
     }
 }
 
+export const updatePR = async function(ev, _) {
+
+    let b = ev.body;
+    let evbuff = new Buffer(b, 'base64');
+    let body = evbuff.toString('utf-8');
+    
+    const config = JSON.parse(body);
+
+    const owner = config.owner
+    const repo = config.repo
+    const branch = config.branch
+    const fileContents = config.fileContents
+    const fileName = config.fileName
+
+    let buff = new Buffer(fileContents);
+    let base64data = buff.toString('base64');
+
+    const lastSha = await getLastSha(owner, repo, branch);
+    const treeSha = await createFile(owner, repo, base64data, lastSha, fileName);
+    const newSha = await createCommit(owner, repo, "adding new workshop", treeSha, lastSha);
+    const response = await updateRef(owner, repo, branch, newSha);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(response)
+    }
+}
+
 
 async function createPR(owner, repo, branch) {
 
@@ -38,11 +66,11 @@ async function createPR(owner, repo, branch) {
     const remove = parts[parts.length-1];
     const prName = parts.join(" ").replace(remove, "");
 
-    const octokit = new Octokit({ auth: token }),
-        title = `New Workshop - ${prName}`,
-        body  = 'This worskshop was generated using PulumiPress',
-        head  = `${branch}`,
-        base  = 'master';
+    const octokit = new Octokit({ auth: token });
+    const title = `New Workshop - ${prName}`;
+    const body  = "This worskshop was generated using PulumiPress";
+    const head  = `${branch}`;
+    const base  = "master";
 
 
     const response = await octokit.request(
@@ -56,8 +84,8 @@ async function createPR(owner, repo, branch) {
 }
 
 async function createBranch(owner, repo, branch, sha) {
-    const octokit = new Octokit({ auth: token }),
-        ref = `refs/heads/${branch}`
+    const octokit = new Octokit({ auth: token });
+    const ref = `refs/heads/${branch}`;
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/refs`, { owner, repo, ref, sha }
@@ -81,9 +109,9 @@ async function getLastSha(owner, repo, branchName) {
 
 async function createFile(owner, repo, contents, lastSha, path: string) {
 
-    const octokit = new Octokit({ auth: token }),
-        content = contents,
-        encoding = "base64"
+    const octokit = new Octokit({ auth: token });
+    const content = contents;
+    const encoding = "base64";
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/blobs`, { owner, repo, content, encoding }
@@ -111,13 +139,13 @@ async function createFile(owner, repo, contents, lastSha, path: string) {
 
 async function createCommit(owner, repo, msg, treeSha, lastCommitSha) {
 
-    const octokit = new Octokit({ auth: token }),
-        message = msg,
-        author = { name: "sean", email: "sean.holung@gmail.com"},
-        parents = [
+    const octokit = new Octokit({ auth: token });
+    const message = msg;
+    const author = { name: "sean", email: "sean.holung@gmail.com"};
+    const parents = [
             lastCommitSha,
-        ],
-        tree = treeSha
+        ];
+    const tree = treeSha;
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/commits`, { owner, repo, message, author, parents, tree }
@@ -130,9 +158,9 @@ async function createCommit(owner, repo, msg, treeSha, lastCommitSha) {
 
 async function updateRef(owner, repo, branch, newSha) {
 
-    const octokit = new Octokit({ auth: token }),
-        ref = `refs/heads/${branch}`,
-        sha = newSha
+    const octokit = new Octokit({ auth: token });
+    const ref = `refs/heads/${branch}`;
+    const sha = newSha;
 
 
     const response = await octokit.request(

@@ -1,9 +1,12 @@
 import { Octokit } from "@octokit/core";
+import { githubToken } from "../config/github/github";
 
 
-const token=""
+// The functions in this file are basically called in dev mode, so you can test things out locally without having to deploy the lambda function.
 
-export const testGH = async function(config) {
+const token = githubToken;
+
+export const openPR = async function(config) {
     const owner = config.owner
     const repo = config.repo
     const branch = config.branch
@@ -19,17 +22,30 @@ export const testGH = async function(config) {
     return await createPR(owner, repo, branch)
 }
 
+export const updatePR = async function(config) {
+    const owner = config.owner
+    const repo = config.repo
+    const branch = config.branch
+    const fileContents = config.fileContents
+    const fileName = config.fileName
+
+    const lastSha = await getLastSha(owner, repo, branch);
+    const treeSha = await createFile(owner, repo, btoa(fileContents), lastSha, fileName);
+    const newSha = await createCommit(owner, repo, "adding new workshop", treeSha, lastSha);
+    return await updateRef(owner, repo, branch, newSha);
+}
+
 async function createPR(owner, repo, branch) {
 
     const parts = branch.split("-");
     const remove = parts[parts.length-1];
     const prName = parts.join(" ").replace(remove, "");
 
-    const octokit = new Octokit({ auth: token }),
-        title = `New Workshop - ${prName}`,
-        body  = 'This worskshop was generated using PulumiPress',
-        head  = `${branch}`,
-        base  = 'master';
+    const octokit = new Octokit({ auth: token });
+    const title = `New Workshop - ${prName}`;
+    const body  = 'This worskshop was generated using PulumiPress';
+    const head  = `${branch}`;
+    const base  = 'master';
 
 
     const response = await octokit.request(
@@ -43,9 +59,8 @@ async function createPR(owner, repo, branch) {
 }
 
 async function createBranch(owner, repo, branch, sha) {
-    const octokit = new Octokit({ auth: token }),
-        ref = `refs/heads/${branch}`
-        // sha = '06413b14b92d06e26935e22775ecb71740706adb'
+    const octokit = new Octokit({ auth: token });
+    const ref = `refs/heads/${branch}`
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/refs`, { owner, repo, ref, sha }
@@ -69,9 +84,9 @@ async function getLastSha(owner, repo, branchName) {
 
 async function createFile(owner, repo, contents, lastSha, path) {
 
-    const octokit = new Octokit({ auth: token }),
-        content = contents,
-        encoding = "base64"
+    const octokit = new Octokit({ auth: token });
+    const content = contents;
+    const encoding = "base64";
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/blobs`, { owner, repo, content, encoding }
@@ -98,13 +113,13 @@ async function createFile(owner, repo, contents, lastSha, path) {
 
 async function createCommit(owner, repo, msg, treeSha, lastCommitSha) {
 
-    const octokit = new Octokit({ auth: token }),
-        message = msg,
-        author = { name: "sean", email: "sean.holung@gmail.com"},
-        parents = [
+    const octokit = new Octokit({ auth: token });
+    const message = msg;
+    const author = { name: "sean", email: "sean.holung@gmail.com"};
+    const parents = [
             lastCommitSha,
-        ],
-        tree = treeSha
+    ];
+    const tree = treeSha;
 
     const response = await octokit.request(
         `POST /repos/{owner}/{repo}/git/commits`, { owner, repo, message, author, parents, tree }
@@ -117,9 +132,9 @@ async function createCommit(owner, repo, msg, treeSha, lastCommitSha) {
 
 async function updateRef(owner, repo, branch, newSha) {
 
-    const octokit = new Octokit({ auth: token }),
-        ref = `refs/heads/${branch}`,
-        sha = newSha
+    const octokit = new Octokit({ auth: token });
+    const ref = `refs/heads/${branch}`;
+    const sha = newSha;
 
 
     const response = await octokit.request(

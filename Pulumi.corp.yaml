@@ -1,4 +1,6 @@
 config:
   aws:region: us-west-2
   pulumi-press:domainName: press.corptron9000.pulumi.com
+  pulumi-press:githubToken:
+    secure: AAABAHVoXlN+avfkqKVg4mP36t8296GbAmJl5YtUT/xE5Li3kZCqKwj+OJ1ZgdIw3aM3TMih6R2LSC+SWtu/G7bNY2uM2ydO
   pulumi-press:hostedZone: corptron9000.pulumi.com

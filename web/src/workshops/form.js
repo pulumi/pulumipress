@@ -4,9 +4,14 @@ import * as jsonSchemaForms from "@rjsf/bootstrap-4";
 import * as github from "../api/github"
 import yaml from "yaml";
 import React from "react";
+import { githubOwner, githubRepo } from "../config/github/github"
+
+export const editMode = "edit";
 
 const Form = jsonSchemaForms.default
 
+// when dev is true, it will call the functions defined in api/github.js client side, instead of invoking the lamda func in order
+// to make it faster to test.
 const dev = false;
 
 export class WorkshopsForm extends React.Component {
@@ -35,7 +40,7 @@ export class WorkshopsForm extends React.Component {
             const urlExists = existing.some(ws => {
                 return ws.name === form.formData.url_slug;
             });
-            if (!urlExists || this.props.mode === "edit") {
+            if (!urlExists || this.props.mode === editMode) {
                 this.send(form);
             } else {
                 alert("url slug already exists. choose a different url.")
@@ -44,14 +49,8 @@ export class WorkshopsForm extends React.Component {
     }
 
     send(form) {
-        let owner = "pulumi";
-        let repo = "pulumi-hugo";
-
-        if (dev) {
-            owner = "sean1588";
-            repo = "sean-test-project";
-        }
-
+        const owner = githubOwner;
+        const repo = githubRepo;
 
         const branch = `${form.formData.url_slug}-${Date.now()}`;
 
@@ -73,17 +72,62 @@ export class WorkshopsForm extends React.Component {
 
         this.setState({loading: true})
 
+        // if we are editing a PR vs editing an existing workshop.
+        if (this.props.branch !== "master" && this.props.mode === editMode) {
+            console.log("editingPR")
+            config.branch = this.props.branch
+            if (dev) {
+                github.updatePR(config).then(res => {
+                    this.setState({loading: false})
+                    console.log("data", res)
+                    github.getPRs(owner, repo).then( resp => {
+                        console.log("prs:", resp)
+                        const prURL = resp.find(pr => pr.head.ref === this.props.branch).html_url;
+                        window.open(prURL, '_blank');
+                    });
+                }).catch(err => {
+                    this.setState({ loading: false});
+                    alert("error: " + JSON.stringify(err));
+                })
+            } else {
+                const requestOptions = {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                };
+                fetch('/pr', requestOptions)
+                    .then(response => response.json())
+                    .then(res => {
+                        this.setState({loading: false})
+                        console.log("data", res)
+                        github.getPRs(owner, repo).then( resp => {
+                            console.log("prs:", resp)
+                            const prURL = resp.find(pr => pr.head.ref === this.props.branch).html_url;
+                            window.open(prURL, '_blank');
+                        });
+                    }).catch(err => {
+                        this.setState({ loading: false});
+                        alert("error: " + JSON.stringify(err));
+                    });
+            }
+            return;
+        }
+
         if (dev) {
-            github.testGH(config).then(res => {
+            github.openPR(config).then(res => {
                 this.setState({loading: false})
                 console.log("data", res)
-                localStorage.setItem("inprogress", "")
+                if (this.props.mode !== editMode) {
+                    localStorage.setItem("inprogress", "")
+                }
                 window.open(res.body.html_url, '_blank');
             }).catch(err => {
                 this.setState({ loading: false});
                 alert("error: " + JSON.stringify(err));
-                localStorage.setItem("inprogress", JSON.stringify(form.formData))
-                this.setState({inprogress: localStorage.getItem("inprogress")})
+                if (this.props.mode !== editMode) {
+                    localStorage.setItem("inprogress", JSON.stringify(form.formData))
+                    this.setState({inprogress: localStorage.getItem("inprogress")})
+                }
             }) ;
         } else {
             const requestOptions = {
@@ -91,19 +135,19 @@ export class WorkshopsForm extends React.Component {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
             };
-            fetch('/gh', requestOptions)
+            fetch('/pr', requestOptions)
                 .then(response => response.json())
                 .then(res => {
                     this.setState({ loading: false});
                     console.log("data", res)
-                    if (this.props.mode !== "edit") {
+                    if (this.props.mode !== editMode) {
                         localStorage.setItem("inprogress", "")
                     }
                     window.open(res.body.html_url, '_blank');
                 }).catch(err => {
                     this.setState({ loading: false});
                     alert("error: " + JSON.stringify(err));
-                    if (this.props.mode !== "edit") {
+                    if (this.props.mode !== editMode) {
                         localStorage.setItem("inprogress", JSON.stringify(form.formData))
                         this.setState({inprogress: localStorage.getItem("inprogress")})
                     }
@@ -115,7 +159,7 @@ export class WorkshopsForm extends React.Component {
 
     render () {
         const { loading, inprogress } = this.state;
-        const data = inprogress && this.props.mode !== "edit" ? JSON.parse(inprogress) : this.props.data
+        const data = inprogress && this.props.mode !== editMode ? JSON.parse(inprogress) : this.props.data;
         return loading ? <div style={{margin: "100px"}}>Submitting PR.....</div>
         : (
             <div style={{ width: "67%", padding: "20px" }}>

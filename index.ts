@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as apigateway from "@pulumi/aws-apigateway";
 import * as staticwebsite from "@pulumi/aws-static-website"
-import {testGH} from "./api/github"
+import {openPR, updatePR} from "./api/github"
 import {createProtectedApiGateway} from "./protected_api_gateway"
 const config = new pulumi.Config();
 
@@ -39,15 +39,12 @@ const domainName = config.require("domainName");
 
 createProtectedApiGateway({ domainName }, (awsprovider) => {
 
-    // A Lambda function to invoke
     const fn = new aws.lambda.CallbackFunction("fn", {
         callback: async (ev: {body: string}, ctx) => {
             return {
                 statusCode: 200,
                 body: JSON.stringify({
-                    date: new Date().toISOString()
-                    // ev: JSON.stringify(ev.body),
-                    // ctx: JSON.stringify(ctx),
+                    date: new Date().toISOString(),
                 }),
             };
         }
@@ -55,12 +52,25 @@ createProtectedApiGateway({ domainName }, (awsprovider) => {
         provider: awsprovider,
     })
 
-    const ghFn = new aws.lambda.CallbackFunction("ghFn", {
-        callback: testGH,
+    const createPRFn = new aws.lambda.CallbackFunction("createPR", {
+        callback: openPR,
         runtime: "nodejs14.x",
         environment: {
             variables: {
-                GITHUB_TOKEN: process.env.GITHUB_TOKEN || "",
+                GITHUB_TOKEN: config.requireSecret("githubToken") || "",
+            }
+        },
+        kmsKeyArn: kmsKey.arn,
+    }, {
+        provider: awsprovider,
+    })
+
+    const updatePRFn = new aws.lambda.CallbackFunction("updatePR", {
+        callback: updatePR,
+        runtime: "nodejs14.x",
+        environment: {
+            variables: {
+                GITHUB_TOKEN: config.requireSecret("githubToken") || "",
             }
         },
         kmsKeyArn: kmsKey.arn,
@@ -75,13 +85,13 @@ createProtectedApiGateway({ domainName }, (awsprovider) => {
         routes: [
             { path: "/", localPath: "web/build", apiKeyRequired: true},
             { path: "/date", method: "GET", eventHandler: fn, apiKeyRequired: true },
-            { path: "/gh", method: "POST", eventHandler: ghFn, apiKeyRequired: true },
+            { path: "/gh", method: "POST", eventHandler: createPRFn, apiKeyRequired: true },
+            { path: "/pr", method: "POST", eventHandler: createPRFn, apiKeyRequired: true },
+            { path: "/pr", method: "PUT", eventHandler: updatePRFn, apiKeyRequired: true },
         ],
     }, {
         provider: awsprovider,
     });
-
-    // apiOut = api;
 
     return api;
 })

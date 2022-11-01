@@ -3,6 +3,7 @@ import React from "react";
 import { ListGroup } from "react-bootstrap";
 import { Nav } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap'
+import { githubOwner, githubRepo } from "../config/github/github"
 
 export class WorkshopsList extends React.Component {
     constructor () {
@@ -11,8 +12,8 @@ export class WorkshopsList extends React.Component {
       }
     
       componentDidMount() {
-        const owner = "pulumi";
-        const repo = "pulumi-hugo";
+        const owner = githubOwner;
+        const repo = githubRepo;
         const path = "themes/default/content/resources";
         github.getContents(owner, repo, path, "master").then( resp => {
             this.setState({workshops: resp})
@@ -27,6 +28,8 @@ export class WorkshopsList extends React.Component {
       render () {
         const { workshops, prs } = this.state
         const openPrs = (prs && prs.length > 0) ? prs.filter(p => {
+            // right now just keying off the timestamp in the branch name to know if the pr was
+            // opened by this tool. we should probably update this to use something else.
             return p.head.ref.includes("-16"); 
         }) : [];
 
