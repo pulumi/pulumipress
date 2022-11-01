@@ -2,8 +2,8 @@ import { Octokit } from "@octokit/core";
 import { githubToken } from "../config/github/github";
 
 
-// The functions in this file are basically called in dev mode, so you can test things out locally without having to deploy the lambda function.
-
+// The functions in this file are basically only called in dev mode, so you can test things out locally without having to deploy the lambda function.
+// these will calls will be made directly from the browser.
 const token = githubToken;
 
 export const openPR = async function(config) {

@@ -1,4 +1,5 @@
-// JSON schema representation the form uses to render.
+// JSON schema representation the form uses to render. This can be ~95% generated directly from the yaml in the workshop template
+// file by converting the yaml to json and then using an online json schema generator to gen the schema based on the json.
 export const schema = {
     "title": "Workshops",
     "type": "object",
@@ -199,6 +200,7 @@ export const schema = {
     ]
   }
   
+  // some custom form adjustments.
   export const uiSchema = {
     "ui:options": {
         "semantic": {

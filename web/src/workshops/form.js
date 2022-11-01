@@ -36,6 +36,7 @@ export class WorkshopsForm extends React.Component {
         let repo = "pulumi-hugo";
         const path = "themes/default/content/resources";
 
+        // extra custom validations. validate the url slug is not already taken.
         github.getContents(owner, repo, path, "master").then( existing => {
             const urlExists = existing.some(ws => {
                 return ws.name === form.formData.url_slug;
